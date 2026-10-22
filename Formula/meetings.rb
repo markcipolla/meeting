@@ -7,7 +7,6 @@ class Meetings < Formula
   head "https://github.com/markcipolla/meeting.git", branch: "main"
 
   depends_on macos: :sonoma
-  depends_on xcode: :build
 
   def install
     ENV["VERSION"] = version.to_s
