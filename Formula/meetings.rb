@@ -1,8 +1,8 @@
 class Meetings < Formula
   desc "Menu bar app for your next meeting, driven by an ICS calendar subscription"
   homepage "https://github.com/markcipolla/meeting"
-  url "https://github.com/markcipolla/meeting/archive/refs/tags/v0.1.1.tar.gz"
-  sha256 "3a2f878cdbb8a624d325698c283e29fdf7308e91940b61f27e3b5d9452a93a87"
+  url "https://github.com/markcipolla/meeting/archive/refs/tags/v0.1.2.tar.gz"
+  sha256 "b4b8ede2453c80ef7cc1115a764e5bb5fb5efa56656c2575be9cc59543a058ef"
   license "MIT"
   head "https://github.com/markcipolla/meeting.git", branch: "main"
 
