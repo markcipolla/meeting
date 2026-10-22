@@ -35,9 +35,11 @@ jobs:
           # shasum happily hashes nothing, which is how v0.1.0 shipped with the
           # SHA-256 of the empty string. Fetch the exact URL Homebrew will use,
           # unauthenticated, so a tarball no user can download fails the release.
+          # Retry: GitHub serves 404 for a tag archive for a few seconds after
+          # the tag lands, so one cold attempt is not evidence of a bad release.
           set -o pipefail
           url="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz"
-          sha=$(curl -fsSL "$url" | shasum -a 256 | cut -d" " -f1)
+          sha=$(curl -fsSL --retry 5 --retry-delay 10 --retry-all-errors "$url" | shasum -a 256 | cut -d" " -f1)
           sed -i "" -e "s|^  url .*|  url \"${url}\"|" \
                     -e "s|^  sha256 .*|  sha256 \"${sha}\"|" Formula/meetings.rb
           git config user.name "github-actions[bot]"
