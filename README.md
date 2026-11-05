@@ -6,8 +6,8 @@ this app reads it and puts the next meeting in the menu bar.
 ## Install
 
 ```sh
-brew tap markcipolla/meeting https://github.com/markcipolla/meeting
-brew trust --formula markcipolla/meeting/meetings
+brew tap markcipolla/meetings https://github.com/markcipolla/meetings
+brew trust --formula markcipolla/meetings/meetings
 brew install meetings
 ln -sfn "$(brew --prefix)/opt/meetings/Meetings.app" /Applications/Meetings.app
 open /Applications/Meetings.app
