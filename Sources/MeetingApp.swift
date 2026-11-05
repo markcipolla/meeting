@@ -1,5 +1,6 @@
 import AppKit
 import EventKit
+import ServiceManagement
 import SwiftUI
 
 // MARK: - Services and link detection
@@ -150,11 +151,14 @@ extension EKEvent {
     @Published var latest: String?  // set only when newer than what is running
     @Published var status = ""
 
+    nonisolated static var autoCheck: Bool { UserDefaults.standard.object(forKey: "autoUpdateCheck") as? Bool ?? true }
+
     var current: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0" }
 
     private init() {
-        Task { await check() }
+        if Self.autoCheck { Task { await check() } }
         Timer.scheduledTimer(withTimeInterval: 6 * 3600, repeats: true) { _ in
+            guard Self.autoCheck else { return }
             Task { await self.check() }
         }
     }
@@ -382,6 +386,8 @@ struct SettingsView: View {
     @AppStorage(Service.teams.prefKey) private var teams = ""
     @AppStorage(Service.zoom.prefKey) private var zoom = ""
     @AppStorage(Service.other.prefKey) private var other = ""
+    @AppStorage("autoUpdateCheck") private var autoUpdateCheck = true
+    @State private var openAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
         Form {
@@ -400,6 +406,17 @@ struct SettingsView: View {
                 }
                 Text("Only Google Meet, Teams and Zoom links open automatically.")
                     .font(.caption).foregroundStyle(.secondary)
+            }
+            Section {
+                Toggle("Open at login", isOn: $openAtLogin)
+                    .onChange(of: openAtLogin) { _, on in
+                        try? on ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
+                        openAtLogin = SMAppService.mainApp.status == .enabled
+                    }
+                Toggle("Check for updates automatically", isOn: $autoUpdateCheck)
+                    .onChange(of: autoUpdateCheck) { _, on in
+                        if on { Task { await updater.check() } }
+                    }
             }
             Section {
                 HStack {
