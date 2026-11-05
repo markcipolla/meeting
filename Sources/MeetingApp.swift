@@ -145,7 +145,7 @@ extension EKEvent {
 
 @MainActor final class Updater: ObservableObject {
     static let shared = Updater()
-    nonisolated static let repo = "markcipolla/meeting"
+    nonisolated static let repo = "markcipolla/meetings"
     nonisolated static let log = "/tmp/meetings-update.log"
 
     @Published var latest: String?  // set only when newer than what is running
