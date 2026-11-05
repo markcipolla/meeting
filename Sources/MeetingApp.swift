@@ -278,8 +278,9 @@ func relaunch() {
         events.filter { Calendar.current.isDateInToday($0.startDate) && $0.endDate > Date() }
     }
 
-    var label: String {
-        guard let e = next else { return "no meetings" }
+    /// nil when nothing is left today, so the menubar falls back to the icon.
+    var label: String? {
+        guard let e = today.first else { return nil }
         let mins = Int((e.startDate.timeIntervalSinceNow / 60).rounded(.up))
         let when = mins <= 0 ? "now" : mins < 60 ? "\(mins)m" : "\(mins / 60)h\(mins % 60)m"
         return "\(e.name.prefix(22)) · \(when)"
@@ -442,7 +443,11 @@ struct SettingsView: View {
     }
 
     var body: some Scene {
-        MenuBarExtra(cal.label) { MenuContent() }
+        MenuBarExtra {
+            MenuContent()
+        } label: {
+            if let label = cal.label { Text(label) } else { Image(systemName: "calendar") }
+        }
         Window("Next 7 days", id: "week") { WeekView() }
         Settings { SettingsView() }
     }
