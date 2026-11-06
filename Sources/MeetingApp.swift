@@ -304,6 +304,7 @@ struct MenuContent: View {
     @ObservedObject var cal = Cal.shared
     @ObservedObject var updater = Updater.shared
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         if let problem = cal.problem {
@@ -338,7 +339,10 @@ struct MenuContent: View {
             NSApp.activate(ignoringOtherApps: true)
         }.keyboardShortcut("k")
         Button("Refresh") { cal.reload() }
-        SettingsLink { Text("Settings…") }
+        Button("Settings…") {
+            openSettings()
+            NSApp.activate(ignoringOtherApps: true)
+        }.keyboardShortcut(",")
         Divider()
         Button("Quit") { NSApp.terminate(nil) }.keyboardShortcut("q")
     }
