@@ -163,15 +163,17 @@ extension EKEvent {
         }
     }
 
-    func check() async {
+    /// false when GitHub couldn't be reached or answered with something unexpected.
+    @discardableResult func check() async -> Bool {
         struct Release: Decodable { let tag_name: String }
         guard let url = URL(string: "https://api.github.com/repos/\(Self.repo)/releases/latest"),
               let (data, _) = try? await URLSession.shared.data(from: url),
               let tag = try? JSONDecoder().decode(Release.self, from: data).tag_name
-        else { return }
+        else { return false }
         let new = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
         // ponytail: numeric string compare, fine for x.y.z; use a real semver parse if pre-release tags appear
         latest = new.compare(current, options: .numeric) == .orderedDescending ? new : nil
+        return true
     }
 
     /// Homebrew is the installer, so it is also the updater.
@@ -388,6 +390,9 @@ struct SettingsView: View {
     @AppStorage(Service.other.prefKey) private var other = ""
     @AppStorage("autoUpdateCheck") private var autoUpdateCheck = true
     @State private var openAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var checking = false
+    @State private var checkOK = true
+    @State private var showCheckResult = false
 
     var body: some View {
         Form {
@@ -424,7 +429,14 @@ struct SettingsView: View {
                     if let v = updater.latest {
                         Button("Update to \(v)") { updater.update() }
                     } else {
-                        Button("Check for updates") { Task { await updater.check() } }
+                        Button(checking ? "Checking…" : "Check for updates") {
+                            checking = true
+                            Task {
+                                checkOK = await updater.check()
+                                checking = false
+                                showCheckResult = true
+                            }
+                        }.disabled(checking)
                     }
                     if !updater.status.isEmpty {
                         Text(updater.status).foregroundStyle(.secondary)
@@ -439,6 +451,28 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .frame(width: 420)
+        // On the Form, not the button: the button is swapped out once an update is found.
+        .alert(checkTitle, isPresented: $showCheckResult) {
+            if let v = updater.latest {
+                Button("Update to \(v)") { updater.update() }
+                Button("Later", role: .cancel) {}
+            } else {
+                Button("OK", role: .cancel) {}
+            }
+        } message: {
+            Text(checkMessage)
+        }
+    }
+
+    private var checkTitle: String {
+        !checkOK ? "Couldn't check for updates"
+            : updater.latest != nil ? "Update available" : "You're up to date"
+    }
+
+    private var checkMessage: String {
+        if !checkOK { return "GitHub couldn't be reached. Try again later." }
+        if let v = updater.latest { return "Meetings \(v) is available. You have \(updater.current)." }
+        return "Meetings \(updater.current) is the latest version."
     }
 
     private func picker(_ service: Service, _ value: Binding<String>) -> some View {
